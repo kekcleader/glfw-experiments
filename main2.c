@@ -57,18 +57,28 @@ GLuint loadTexture(const char* filename) {
 }
 
 int main() {
+  GLFWwindow *win;
+
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-  if (window == NULL) {
+  // Получение основного монитора
+  GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+  // Получение режима видео для основного монитора
+  const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
+  // Создание окна
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
+  glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
+  win = glfwCreateWindow(mode->width, mode->height, "Fullscreen", primaryMonitor, NULL);
+  if (!win) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();
     return -1;
   }
-  glfwMakeContextCurrent(window);
+  glfwMakeContextCurrent(win);
 
   if (glewInit() != GLEW_OK) {
     printf("Failed to initialize GLEW\n");
@@ -98,10 +108,10 @@ int main() {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции    // текстурные координаты
-     0.25f,  0.4f, 0.0f,  1.0f, 0.0f, // верхний правый угол
-     0.25f, -0.4f, 0.0f,  1.0f, 1.0f, // нижний правый угол
-    -0.25f, -0.4f, 0.0f,  0.0f, 1.0f, // нижний левый угол
-    -0.25f,  0.4f, 0.0f,  0.0f, 0.0f  // верхний левый угол
+     0.25f,  0.45f, 0.0f,  1.0f, 0.0f, // верхний правый угол
+     0.25f, -0.45f, 0.0f,  1.0f, 1.0f, // нижний правый угол
+    -0.25f, -0.45f, 0.0f,  0.0f, 1.0f, // нижний левый угол
+    -0.25f,  0.45f, 0.0f,  0.0f, 0.0f  // верхний левый угол
   };
   unsigned int indices[] = {
     0, 1, 3, // первый треугольник
@@ -132,15 +142,15 @@ int main() {
   GLuint textureID = loadTexture("texture.jpg");
   glBindTexture(GL_TEXTURE_2D, textureID);
 
-  while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  while (!glfwWindowShouldClose(win)) {
+    glClearColor(0.2, 0.6, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(win);
     glfwPollEvents();
   }
 

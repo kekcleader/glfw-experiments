@@ -165,7 +165,7 @@ int main(void) {
   while (!glfwWindowShouldClose(win)) {
     glfwMakeContextCurrent(win);
 
-    glClearColor(0.2, 0.6, 1.0, 0.0);
+    glClearColor(0.2, 0.6, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
