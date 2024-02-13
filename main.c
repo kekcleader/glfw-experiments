@@ -64,7 +64,9 @@ int main(void) {
   // Получение режима видео для основного монитора
   const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
 
-  // Создание двух окон
+  // Создание окна
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
+  glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
   win = glfwCreateWindow(mode->width, mode->height, "Fullscreen", primaryMonitor, NULL);
   if (!win) {
     glfwTerminate();
