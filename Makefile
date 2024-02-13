@@ -1,8 +1,10 @@
+PROG=main
+
 all:
-	cc main.c -o main -lglfw -lGLEW -lGL -lm
+	cc $(PROG).c -o $(PROG) -lglfw -lGLEW -lGL -lm
 
 run: all
-	./main
+	./$(PROG)
 
 .phony:
 	run
