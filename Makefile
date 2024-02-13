@@ -1,4 +1,4 @@
-PROG=main
+PROG=main2
 
 all:
 	cc $(PROG).c -o $(PROG) -lglfw -lGLEW -lGL -lm
