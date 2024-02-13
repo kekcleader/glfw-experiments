@@ -23,8 +23,10 @@ const char* fragmentShaderSource = "#version 330 core\n"
   "uniform sampler2D texture1;\n"
   "uniform float time;\n"
   "void main() {\n"
-  //"  FragColor = texture(texture1, TexCoord);\n"
-  "  vec2 animatedTexCoord = TexCoord + vec2(time * 0.1, 0.0);\n" // Скорость анимации регулируется множителем 0.1
+  // Создание базового волнового эффекта с использованием синусоидальной функции
+  "  float wave = sin(TexCoord.x * 10.0 + time) * 1 + sin(TexCoord.y * 10.0 + time) * 1;\n"
+  // Модификация текстурных координат с использованием волнового эффекта
+    "vec2 animatedTexCoord = TexCoord + wave;\n"
   "  FragColor = texture(texture1, animatedTexCoord);\n"
   "}\0";
 
@@ -109,10 +111,10 @@ int main() {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции    // текстурные координаты
-     0.25f,  0.45f, 0.0f,  1.0f, 0.0f, // верхний правый угол
-     0.25f, -0.45f, 0.0f,  1.0f, 1.0f, // нижний правый угол
-    -0.25f, -0.45f, 0.0f,  0.0f, 1.0f, // нижний левый угол
-    -0.25f,  0.45f, 0.0f,  0.0f, 0.0f  // верхний левый угол
+     0.55f,  1.0f, 0.0f,  1.0f, 0.0f, // верхний правый угол
+     0.55f, -1.0f, 0.0f,  1.0f, 1.0f, // нижний правый угол
+    -0.55f, -1.0f, 0.0f,  0.0f, 1.0f, // нижний левый угол
+    -0.55f,  1.0f, 0.0f,  0.0f, 0.0f  // верхний левый угол
   };
   unsigned int indices[] = {
     0, 1, 3, // первый треугольник
