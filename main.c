@@ -6,10 +6,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define windowCount 16
-#define winW 400
-#define winH 200
-
 GLuint loadTexture(const char* filename) {
   int width, height, channels;
   unsigned char* data = stbi_load(filename, &width, &height, &channels, 0);
@@ -57,26 +53,25 @@ void drawMovingSquare(GLFWwindow* window, double time, GLuint textureID) {
 }
 
 int main(void) {
-  GLFWwindow* windows[windowCount];
-  GLFWwindow* firstWin;
+  GLFWwindow* win;
 
   if (!glfwInit()) {
     return -1;
   }
 
+  // Получение основного монитора
+  GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+  // Получение режима видео для основного монитора
+  const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
   // Создание двух окон
-  firstWin = NULL;
-  for (int i = 0; i < windowCount; ++i) {
-    windows[i] = glfwCreateWindow(winW, winH, "Moving Square Window", NULL, firstWin);
-    if (!windows[i]) {
-      glfwTerminate();
-      return -1;
-    }
-    glfwSetWindowPos(windows[i], i % 4 * winW, i / 4 * winH);
-    firstWin = windows[0];
+  win = glfwCreateWindow(mode->width, mode->height, "Fullscreen", primaryMonitor, NULL);
+  if (!win) {
+    glfwTerminate();
+    return -1;
   }
 
-  glfwMakeContextCurrent(windows[0]);
+  glfwMakeContextCurrent(win);
   glewExperimental = GL_TRUE;
   GLenum err = glewInit();
   if (GLEW_OK != err) {
@@ -92,22 +87,15 @@ int main(void) {
 
   // Главный цикл
   int done = 0;
-  while (!done) {
-    for (int i = 0; i < windowCount; ++i) {
-      if (glfwWindowShouldClose(windows[i])) {
-        done = 1;
-      }
-    }
-    for (int i = 0; i < windowCount; ++i) {
-      glfwMakeContextCurrent(windows[i]);
+  while (!glfwWindowShouldClose(win)) {
+    glfwMakeContextCurrent(win);
 
-      glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-      double time = glfwGetTime();
-      drawMovingSquare(windows[i], time, textureID);
+    double time = glfwGetTime();
+    drawMovingSquare(win, time, textureID);
 
-      glfwSwapBuffers(windows[i]);
-    }
+    glfwSwapBuffers(win);
 
     glfwPollEvents();
   }
