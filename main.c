@@ -56,14 +56,17 @@ void drawMovingSquare(GLFWwindow* window, double time, GLuint textureID) {
 
 int main(void) {
   GLFWwindow* windows[windowCount];
+  GLFWwindow* firstWin;
 
   if (!glfwInit()) {
     return -1;
   }
 
   // Создание двух окон
+  firstWin = NULL;
   for (int i = 0; i < windowCount; ++i) {
-    windows[i] = glfwCreateWindow(640, 480, "Moving Square Window", NULL, NULL);
+    windows[i] = glfwCreateWindow(640, 480, "Moving Square Window", NULL, firstWin);
+    firstWin = windows[0];
     if (!windows[i]) {
       glfwTerminate();
       return -1;
@@ -81,7 +84,6 @@ int main(void) {
 
   // Загрузка текстуры
   GLuint textureID = loadTexture("texture.jpg");
-  printf("textureID=%d\n", textureID);
 
   // Главный цикл
   while (!glfwWindowShouldClose(windows[0]) && !glfwWindowShouldClose(windows[1])) {
