@@ -19,9 +19,10 @@ const char* fragmentShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
     "in vec2 TexCoord;\n"
     "uniform sampler2D texture1;\n"
+    "uniform float time;\n"
     "void main() {\n"
     "   vec2 texCoord = TexCoord;\n"
-    "   texCoord.x += sin(texCoord.y * 20.0 + glfwGetTime()) * 0.01;\n"
+    "   texCoord.x += sin(texCoord.y * 20.0 + time) * 0.01;\n"
     "   FragColor = texture(texture1, texCoord);\n"
     "}\0";
 
@@ -99,12 +100,13 @@ GLuint loadTexture(const char* filename) {
   return textureID;
 }
 
-void drawMovingSquare(GLFWwindow* window, double time, GLuint textureID) {
+void drawMovingSquare(GLFWwindow* window, double time, GLuint textureID, GLuint shaderProgram) {
   float x = (float)sin(time) * 0.5f; // Простая анимация движения
   float y = (float)cos(time) * 0.5f;
 
+  glActiveTexture(GL_TEXTURE0); // Активируем текстурный блок перед привязкой
   glBindTexture(GL_TEXTURE_2D, textureID); // Привязка текстуры
-  glEnable(GL_TEXTURE_2D); // Включение текстурирования
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0); // Текстурный юнит 0
 
   glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-0.25f + x, -0.4f + y);
@@ -164,8 +166,12 @@ int main(void) {
 
     glUseProgram(shaderProgram);
 
+    GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
+    // Передаём текущее время в шейдер
+    glUniform1f(timeLocation, (GLfloat)glfwGetTime());
+
     double time = glfwGetTime();
-    drawMovingSquare(win, time, textureID);
+    drawMovingSquare(win, time, textureID, shaderProgram);
 
     glfwSwapBuffers(win);
 
