@@ -18,12 +18,13 @@ const char* vertexShaderSource = "#version 330 core\n"
 const char* fragmentShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
     "in vec2 TexCoord;\n"
-    "uniform sampler2D texture1;\n"
+    "uniform sampler2D texture0;\n"
     "uniform float time;\n"
     "void main() {\n"
-    "   vec2 texCoord = TexCoord;\n"
-    "   texCoord.x += sin(texCoord.y * 20.0 + time) * 0.01;\n"
-    "   FragColor = texture(texture1, texCoord);\n"
+ //   "   vec2 texCoord = TexCoord;\n"
+ //   "   texCoord.x += sin(texCoord.y * 20.0 + time) * 0.01;\n"
+    "   FragColor = texture(texture0, TexCoord);\n"
+ //   "   FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
     "}\0";
 
 GLuint compileShader(GLenum type, const char* source) {
@@ -100,13 +101,12 @@ GLuint loadTexture(const char* filename) {
   return textureID;
 }
 
-void drawMovingSquare(GLFWwindow* window, double time, GLuint textureID, GLuint shaderProgram) {
+void draw(GLFWwindow* window, double time, GLuint textureID, GLuint shaderProgram) {
   float x = (float)sin(time) * 0.5f; // Простая анимация движения
   float y = (float)cos(time) * 0.5f;
 
   glActiveTexture(GL_TEXTURE0); // Активируем текстурный блок перед привязкой
   glBindTexture(GL_TEXTURE_2D, textureID); // Привязка текстуры
-  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0); // Текстурный юнит 0
 
   glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-0.25f + x, -0.4f + y);
@@ -156,6 +156,10 @@ int main(void) {
   // Шейдер
   GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
 
+  glUseProgram(shaderProgram);
+
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0); // Текстурный юнит 0
+
   // Главный цикл
   int done = 0;
   while (!glfwWindowShouldClose(win)) {
@@ -164,14 +168,12 @@ int main(void) {
     glClearColor(0.2, 0.6, 1.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(shaderProgram);
-
     GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
     // Передаём текущее время в шейдер
     glUniform1f(timeLocation, (GLfloat)glfwGetTime());
 
     double time = glfwGetTime();
-    drawMovingSquare(win, time, textureID, shaderProgram);
+    draw(win, time, textureID, shaderProgram);
 
     glfwSwapBuffers(win);
 
