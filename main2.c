@@ -11,10 +11,9 @@ const char* vertexShaderSource = "#version 330 core\n"
   "layout (location = 0) in vec3 aPos;\n"
   "layout (location = 1) in vec2 aTexCoord;\n"
   "out vec2 TexCoord;\n"
-  "void main()\n"
-  "{\n"
-  "   gl_Position = vec4(aPos, 1.0);\n"
-  "   TexCoord = aTexCoord;\n"
+  "void main() {\n"
+  "  gl_Position = vec4(aPos, 1.0);\n"
+  "  TexCoord = aTexCoord;\n"
   "}\0";
 
 // Фрагментный шейдер
@@ -22,9 +21,11 @@ const char* fragmentShaderSource = "#version 330 core\n"
   "out vec4 FragColor;\n"
   "in vec2 TexCoord;\n"
   "uniform sampler2D texture1;\n"
-  "void main()\n"
-  "{\n"
-  "   FragColor = texture(texture1, TexCoord);\n"
+  "uniform float time;\n"
+  "void main() {\n"
+  //"  FragColor = texture(texture1, TexCoord);\n"
+  "  vec2 animatedTexCoord = TexCoord + vec2(time * 0.1, 0.0);\n" // Скорость анимации регулируется множителем 0.1
+  "  FragColor = texture(texture1, animatedTexCoord);\n"
   "}\0";
 
 GLuint loadTexture(const char* filename) {
@@ -142,12 +143,20 @@ int main() {
   GLuint textureID = loadTexture("texture.jpg");
   glBindTexture(GL_TEXTURE_2D, textureID);
 
+  int timeLocation = glGetUniformLocation(shaderProgram, "time");
+
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
+
+    // Получение текущего времени
+    float currentTime = glfwGetTime();
+    // Передача времени в фрагментный шейдер
+    glUniform1f(timeLocation, currentTime);
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(win);
