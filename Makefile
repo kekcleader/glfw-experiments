@@ -1,5 +1,5 @@
 all:
-	cc -o main main.c -lX11 -lGL -lGLU
+	cc main.c -o main -lglfw -lGL
 
 run: all
 	./main
