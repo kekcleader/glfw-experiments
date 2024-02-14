@@ -24,7 +24,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
   "uniform float time;\n"
   "void main() {\n"
   // Создание базового волнового эффекта с использованием синусоидальной функции
-  "  float wave = sin(TexCoord.x * 10.0 + time) * 1 + sin(TexCoord.y * 10.0 + time) * 1;\n"
+  "  float wave = sin(TexCoord.x * 30.0 + time) * 0.003 + sin(TexCoord.y * 30.0 + time) * 0.003;\n"
   // Модификация текстурных координат с использованием волнового эффекта
     "vec2 animatedTexCoord = TexCoord + wave;\n"
   "  FragColor = texture(texture1, animatedTexCoord);\n"
