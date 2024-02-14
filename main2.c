@@ -66,6 +66,10 @@ GLuint loadTexture(const char* filename) {
   return textureID;
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+  glViewport(0, 0, width, height);
+}
+
 int main() {
   GLFWwindow *win;
 
@@ -88,6 +92,7 @@ int main() {
     glfwTerminate();
     return -1;
   }
+  glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
   glfwMakeContextCurrent(win);
 
   if (glewInit() != GLEW_OK) {
