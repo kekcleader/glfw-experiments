@@ -150,7 +150,13 @@ GLuint createShaderProgram(const char *vertexSource, const char *fragmentSource)
   return shaderProgram;
 }
 
-void init_buffers(GLuint *VBO, GLuint *VAO, GLuint *EBO) {
+void close_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
+  glDeleteVertexArrays(1, VAO);
+  glDeleteBuffers(1, VBO);
+  glDeleteBuffers(1, EBO);
+}
+
+void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции    // текстурные координаты
@@ -185,24 +191,8 @@ void init_buffers(GLuint *VBO, GLuint *VAO, GLuint *EBO) {
   glEnableVertexAttribArray(1);
 }
 
-int main() {
-  GLFWwindow *win;
-  GLuint VBO, VAO, EBO;
-
-  init_graph();
-  win = create_window();
-  if (!win) return 1;
-
-  // Шейдер
-  GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
-
-  init_buffers(&VBO, &VAO, &EBO);
-
-  // Загрузка текстуры
-  GLuint textureID = loadTexture("texture.jpg");
-  glBindTexture(GL_TEXTURE_2D, textureID);
-
-  int timeLocation = glGetUniformLocation(shaderProgram, "time");
+void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
+  GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
 
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
@@ -221,10 +211,28 @@ int main() {
     glfwSwapBuffers(win);
     glfwPollEvents();
   }
+}
 
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO);
+int main() {
+  GLFWwindow *win;
+  GLuint VBO, VAO, EBO;
+
+  init_graph();
+  win = create_window();
+  if (!win) return 1;
+
+  // Шейдер
+  GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
+
+  init_buffers(&VAO, &VBO, &EBO);
+
+  // Загрузка текстуры
+  GLuint textureID = loadTexture("texture.jpg");
+  glBindTexture(GL_TEXTURE_2D, textureID);
+
+  run(win, shaderProgram, VAO);
+
+  close_buffers(&VAO, &VBO, &EBO);
   glDeleteProgram(shaderProgram);
 
   glfwTerminate();
