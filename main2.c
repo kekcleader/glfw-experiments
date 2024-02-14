@@ -70,13 +70,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-int main() {
-  GLFWwindow *win;
-
+void init_graph() {
   glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+}
+
+GLFWwindow *create_window() {
+  GLFWwindow *win;
 
   // Получение основного монитора
   GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
@@ -84,42 +83,74 @@ int main() {
   const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
 
   // Создание окна
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
   glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
   win = glfwCreateWindow(mode->width, mode->height, "Fullscreen", primaryMonitor, NULL);
   if (!win) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();
-    return -1;
+    return NULL;
   }
   glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
   glfwMakeContextCurrent(win);
 
   if (glewInit() != GLEW_OK) {
     printf("Failed to initialize GLEW\n");
-    return -1;
+    return NULL;
   }
 
+  return win;
+}
+
+GLuint compileShader(GLenum type, const char* source) {
+  // Создание шейдера
+  GLuint shader = glCreateShader(type);
+  glShaderSource(shader, 1, &source, NULL);
+  glCompileShader(shader);
+
+  // Проверка на ошибки компиляции
+  GLint success;
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    char infoLog[512];
+    glGetShaderInfoLog(shader, 512, NULL, infoLog);
+    fprintf(stderr, "Ошибка компиляции шейдера: %s\n", infoLog);
+  }
+
+  return shader;
+}
+
+GLuint createShaderProgram(const char *vertexSource, const char *fragmentSource) {
   // Компиляция шейдеров
-  unsigned int vertexShader, fragmentShader;
-  vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-  glCompileShader(vertexShader);
+  GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource);
+  GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
 
-  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-  glCompileShader(fragmentShader);
-
-  // Создание программы шейдеров
-  unsigned int shaderProgram;
-  shaderProgram = glCreateProgram();
+  // Создание программы и прикрепление шейдеров к ней
+  GLuint shaderProgram = glCreateProgram();
   glAttachShader(shaderProgram, vertexShader);
   glAttachShader(shaderProgram, fragmentShader);
   glLinkProgram(shaderProgram);
 
+  // Проверка на ошибки линковки
+  GLint success;
+  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+  if (!success) {
+    char infoLog[512];
+    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    fprintf(stderr, "Ошибка линковки программы: %s\n", infoLog);
+  }
+
+  // Удаление шейдеров после линковки
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
+  return shaderProgram;
+}
+
+void init_buffers(GLuint *VBO, GLuint *VAO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции    // текстурные координаты
@@ -133,25 +164,39 @@ int main() {
     1, 2, 3  // второй треугольник
   };
 
-  unsigned int VBO, VAO, EBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
+  glGenVertexArrays(1, VAO);
+  glGenBuffers(1, VBO);
+  glGenBuffers(1, EBO);
 
-  glBindVertexArray(VAO);
+  glBindVertexArray(*VAO);
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, *VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
   // Позиционные атрибуты
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
+
   // Текстурные атрибуты
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+}
+
+int main() {
+  GLFWwindow *win;
+  GLuint VBO, VAO, EBO;
+
+  init_graph();
+  win = create_window();
+  if (!win) return 1;
+
+  // Шейдер
+  GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
+
+  init_buffers(&VBO, &VAO, &EBO);
 
   // Загрузка текстуры
   GLuint textureID = loadTexture("texture.jpg");
