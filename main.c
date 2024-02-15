@@ -24,6 +24,8 @@ const char* fragmentShaderSource = "#version 330 core\n"
   "\n"
   "uniform sampler2D texture1;\n"
   "uniform float time;\n"
+  "uniform vec2 cursorPos;\n"
+  "uniform float cursorSize = 0.02;\n"
   "\n"
   "void main() {\n"
   "  vec2 pos = TexCoord * 2.0 - 1.0;\n"
@@ -34,8 +36,15 @@ const char* fragmentShaderSource = "#version 330 core\n"
   "  r *= glow;\n"
   "  g *= glow;\n"
   "  b *= glow;\n"
-  "  FragColor = vec4(r, g, b, 1.0) * texture(texture1, TexCoord);\n"
+  "  vec2 ndc = gl_FragCoord.xy / vec2(1920.0, 1080.0) * 2.0 - 1.0;\n"
+  "  if (abs(ndc.x - cursorPos.x) < cursorSize && abs(ndc.y - cursorPos.y) < cursorSize) {\n"
+  "    FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Цвет курсора (красный)\n"
+  "  } else {\n"
+  "    FragColor = vec4(r, g, b, 1.0) * texture(texture1, TexCoord);\n"
+  "  }\n"
   "}\0";
+
+int winW, winH;
 
 GLuint loadTexture(const char* filename) {
   int width, height, channels;
@@ -68,6 +77,8 @@ GLuint loadTexture(const char* filename) {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
+  winW = width;
+  winH = height;
 }
 
 void init_graph() {
@@ -160,10 +171,10 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции    // текстурные координаты
-     0.55f,  1.0f, 0.0f,  1.0f, 0.0f, // верхний правый угол
-     0.55f, -1.0f, 0.0f,  1.0f, 1.0f, // нижний правый угол
-    -0.55f, -1.0f, 0.0f,  0.0f, 1.0f, // нижний левый угол
-    -0.55f,  1.0f, 0.0f,  0.0f, 0.0f  // верхний левый угол
+     1.0f,  1.0f, 0.0f,  1.0f, 0.0f, // верхний правый угол
+     1.0f, -1.0f, 0.0f,  1.0f, 1.0f, // нижний правый угол
+    -1.0f, -1.0f, 0.0f,  0.0f, 1.0f, // нижний левый угол
+    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f  // верхний левый угол
   };
   unsigned int indices[] = {
     0, 1, 3, // первый треугольник
@@ -193,6 +204,8 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
 
 void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
+  GLint cursorPosLocation = glGetUniformLocation(shaderProgram, "cursorPos");
+  double x, y;
 
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
@@ -201,10 +214,11 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
-    // Получение текущего времени
-    float currentTime = glfwGetTime();
-    // Передача времени в фрагментный шейдер
-    glUniform1f(timeLocation, currentTime);
+    glUniform1f(timeLocation, glfwGetTime());
+    glfwGetCursorPos(win, &x, &y);
+    x = x / winW * 2.0 - 1.0;
+    y = -(y / winH * 2.0 - 1.0);
+    glUniform2f(cursorPosLocation, (float)x, (float)y);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
