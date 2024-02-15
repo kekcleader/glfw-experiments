@@ -6,45 +6,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// Вершинный шейдер
-const char* vertexShaderSource = "#version 330 core\n"
-  "layout (location = 0) in vec3 aPos;\n"
-  "layout (location = 1) in vec2 aTexCoord;\n"
-  "out vec2 TexCoord;\n"
-  "void main() {\n"
-  "  gl_Position = vec4(aPos, 1.0);\n"
-  "  TexCoord = aTexCoord;\n"
-  "}\0";
-
-// Фрагментный шейдер
-const char* fragmentShaderSource = "#version 330 core\n"
-  "out vec4 FragColor;\n"
-  "\n"
-  "in vec2 TexCoord;\n"
-  "\n"
-  "uniform sampler2D texture1;\n"
-  "uniform float time;\n"
-  "uniform vec2 cursorPos;\n"
-  "uniform float cursorSize = 0.02;\n"
-  "\n"
-  "void main() {\n"
-  "  vec2 pos = TexCoord * 2.0 - 1.0;\n"
-  "  float r = cos(time + pos.x) * 0.5 + 0.5;\n"
-  "  float g = sin(time + pos.y) * 0.5 + 0.5;\n"
-  "  float b = sin(time * 1.5) * cos(time + pos.x + pos.y) * 0.5 + 0.5;\n"
-  "  float glow = 1.0 - length(pos) * 0.5;\n"
-  "  r *= glow;\n"
-  "  g *= glow;\n"
-  "  b *= glow;\n"
-  "  vec2 ndc = gl_FragCoord.xy / vec2(1920.0, 1080.0) * 2.0 - 1.0;\n"
-  "  if (abs(ndc.x - cursorPos.x) < cursorSize && abs(ndc.y - cursorPos.y) < cursorSize) {\n"
-  "    FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Цвет курсора (красный)\n"
-  "  } else {\n"
-  "    FragColor = vec4(r, g, b, 1.0) * texture(texture1, TexCoord);\n"
-  "  }\n"
-  "}\0";
-
 int winW, winH;
+
+char *load_shader_file(const char* fileName) {
+  FILE *fp;
+  long size = 0;
+  char *shaderContent;
+
+  /* Read File to get size */
+  fp = fopen(fileName, "rb");
+  if (fp == NULL) {
+    printf("Failed to load shader content\n");
+    return "";
+  }
+  fseek(fp, 0L, SEEK_END);
+  size = ftell(fp) + 1;
+  fclose(fp);
+
+  /* Read File for Content */
+  fp = fopen(fileName, "r");
+  shaderContent = memset(malloc(size), '\0', size);
+  fread(shaderContent, 1, size - 1, fp);
+  fclose(fp);
+
+  return shaderContent;
+}
 
 GLuint loadTexture(const char* filename) {
   int width, height, channels;
@@ -106,6 +92,7 @@ GLFWwindow *create_window() {
     return NULL;
   }
   glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
+  glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   glfwMakeContextCurrent(win);
 
   if (glewInit() != GLEW_OK) {
@@ -134,7 +121,10 @@ GLuint compileShader(GLenum type, const char* source) {
   return shader;
 }
 
-GLuint createShaderProgram(const char *vertexSource, const char *fragmentSource) {
+GLuint createShaderProgram() {
+  char *vertexSource = load_shader_file("shaders/vertex.txt");
+  char *fragmentSource = load_shader_file("shaders/fragment.txt");
+
   // Компиляция шейдеров
   GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource);
   GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
@@ -236,7 +226,7 @@ int main() {
   if (!win) return 1;
 
   // Шейдер
-  GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
+  GLuint shaderProgram = createShaderProgram();
 
   init_buffers(&VAO, &VBO, &EBO);
 

@@ -1,0 +1,26 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoord;
+
+uniform sampler2D texture1;
+uniform float time;
+uniform vec2 cursorPos;
+uniform float cursorSize = 0.02;
+
+void main() {
+  vec2 pos = TexCoord * 2.0 - 1.0;
+  float r = cos(time + pos.x) * 0.5 + 0.5;
+  float g = sin(time + pos.y) * 0.5 + 0.5;
+  float b = sin(time * 1.5) * cos(time + pos.x + pos.y) * 0.5 + 0.5;
+  float glow = 1.0 - length(pos) * 0.5;
+  r *= glow;
+  g *= glow;
+  b *= glow;
+  vec2 ndc = gl_FragCoord.xy / vec2(1920.0, 1080.0) * 2.0 - 1.0;
+  if (abs(ndc.x - cursorPos.x) < cursorSize && abs(ndc.y - cursorPos.y) < cursorSize) {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  } else {
+    FragColor = vec4(r, g, b, 1.0) * texture(texture1, TexCoord);
+  }
+}
