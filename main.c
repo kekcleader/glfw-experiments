@@ -7,6 +7,7 @@
 #include "stb_image.h"
 
 int winW, winH;
+GLint screenSizeLocation;
 
 char *load_shader_file(const char* fileName) {
   FILE *fp;
@@ -65,6 +66,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
   winW = width;
   winH = height;
+  glUniform2f(screenSizeLocation, (float)width, (float)height);
 }
 
 void init_graph() {
@@ -195,6 +197,7 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
 void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
   GLint cursorPosLocation = glGetUniformLocation(shaderProgram, "cursorPos");
+  screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
   double x, y;
 
   while (!glfwWindowShouldClose(win)) {

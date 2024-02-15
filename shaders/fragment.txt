@@ -5,6 +5,7 @@ in vec2 TexCoord;
 
 uniform sampler2D texture1;
 uniform float time;
+uniform vec2 screenSize;
 uniform vec2 cursorPos;
 uniform float cursorSize = 0.02;
 
@@ -17,7 +18,7 @@ void main() {
   r *= glow;
   g *= glow;
   b *= glow;
-  vec2 ndc = gl_FragCoord.xy / vec2(1920.0, 1080.0) * 2.0 - 1.0;
+  vec2 ndc = gl_FragCoord.xy / vec2(screenSize.x, screenSize.y) * 2.0 - 1.0;
   if (abs(ndc.x - cursorPos.x) < cursorSize && abs(ndc.y - cursorPos.y) < cursorSize) {
     FragColor = vec4(1.0, 0.0, 0.0, 1.0);
   } else {
