@@ -6,6 +6,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define screenW 320
+#define screenH 200
+
 int winW, winH;
 GLint screenSizeLocation;
 
@@ -95,7 +98,9 @@ GLFWwindow *create_window() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
   glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
-  win = glfwCreateWindow(mode->width, mode->height, "Fullscreen", primaryMonitor, NULL);
+  winW = mode->width;
+  winH = mode->height;
+  win = glfwCreateWindow(mode->width, mode->height, "Program", primaryMonitor, NULL);
   if (!win) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();
@@ -170,11 +175,11 @@ void close_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
 void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
-    // позиции    // текстурные координаты
-     1.0f,  1.0f, 0.0f,  1.0f, 0.0f, // верхний правый угол
-     1.0f, -1.0f, 0.0f,  1.0f, 1.0f, // нижний правый угол
-    -1.0f, -1.0f, 0.0f,  0.0f, 1.0f, // нижний левый угол
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f  // верхний левый угол
+    // позиции        // текстурные координаты
+    screenW, 0      , 0, 1, 0, // верхний правый угол
+    screenW, screenH, 0, 1, 1, // нижний правый угол
+    0      , screenH, 0, 0, 1, // нижний левый угол
+    0      , 0      , 0, 0, 0  // верхний левый угол
   };
   unsigned int indices[] = {
     0, 1, 3, // первый треугольник
@@ -205,15 +210,18 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
 void makeProjection(float *m, float left, float right, float top, float bottom) {
   float near = -1.0;
   float far = 1.0;
-  int i;
-  for (i = 0; i < 16; i++) m[i] = 0.0;
+  memset(m, 0, 16 * sizeof(float));
+
+  // Главная диагональ
   m[0] = 2.0f / (right - left);
   m[5] = 2.0f / (top - bottom);
   m[10] = -2.0f / (far - near);
-  m[12] = -(right + left) / (right - left);
-  m[13] = -(top + bottom) / (top - bottom);
-  m[14] = -(far + near) / (far - near);
   m[15] = 1.0f;
+
+  // Последний столбец
+  m[3] = -(right + left) / (right - left);
+  m[7] = -(top + bottom) / (top - bottom);
+  m[11] = -(far + near) / (far - near);
 }
 
 void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
@@ -227,7 +235,7 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
 
   float projectionMatrix[16];
-  makeProjection(projectionMatrix, -1.75, 1.75, 1.0, -1.0);
+  makeProjection(projectionMatrix, 0, screenW, 0, screenH);
 
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
