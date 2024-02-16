@@ -6,11 +6,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define screenW 320
-#define screenH 200
+#define bufW 320
+#define bufH 200
 
 int winW, winH;
 GLint screenSizeLocation;
+float projectionMatrix[16];
 
 // Textures
 GLuint manTextureID;
@@ -73,11 +74,47 @@ GLuint loadTexture(const char *filename) {
   return textureID;
 }
 
+void makeProjection(float *m, float left, float right, float top, float bottom) {
+  float near = -1.0;
+  float far = 1.0;
+  memset(m, 0, 16 * sizeof(float));
+
+  // Главная диагональ
+  m[0] = 2.0f / (right - left);
+  m[5] = 2.0f / (top - bottom);
+  m[10] = -2.0f / (far - near);
+  m[15] = 1.0f;
+
+  // Последний столбец
+  m[3] = -(right + left) / (right - left);
+  m[7] = -(top + bottom) / (top - bottom);
+  m[11] = -(far + near) / (far - near);
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
   winW = width;
   winH = height;
   glUniform2f(screenSizeLocation, (float)width, (float)height);
+
+  float bufRatio = (float)bufW / bufH;
+  float screenRatio = (float)width / height;
+
+  float w, h, offX, offY;
+
+  if (screenRatio > bufRatio) {
+    w = bufW * (float)width / height;
+    h = bufH;
+    offX = (w - bufW) / 2;
+    offY = 0;
+  } else {
+    w = bufW;
+    h = bufH * (float)height / width;
+    offX = 0;
+    offY = (h - bufH) / 2;
+  }
+
+  makeProjection(projectionMatrix, -offX, w - offX, -offY, h - offY);
 }
 
 void init_graph() {
@@ -96,11 +133,12 @@ GLFWwindow *create_window() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
+  //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
   glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
   winW = mode->width;
   winH = mode->height;
-  win = glfwCreateWindow(mode->width, mode->height, "Program", primaryMonitor, NULL);
+  //win = glfwCreateWindow(mode->width, mode->height, "Program", primaryMonitor, NULL);
+  win = glfwCreateWindow(1000, 500, "Program", NULL, NULL);
   if (!win) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();
@@ -176,9 +214,9 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
     // позиции        // текстурные координаты
-    screenW, 0      , 0, 1, 0, // верхний правый угол
-    screenW, screenH, 0, 1, 1, // нижний правый угол
-    0      , screenH, 0, 0, 1, // нижний левый угол
+    bufW, 0      , 0, 1, 0, // верхний правый угол
+    bufW, bufH, 0, 1, 1, // нижний правый угол
+    0      , bufH, 0, 0, 1, // нижний левый угол
     0      , 0      , 0, 0, 0  // верхний левый угол
   };
   unsigned int indices[] = {
@@ -207,23 +245,6 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   glEnableVertexAttribArray(1);
 }
 
-void makeProjection(float *m, float left, float right, float top, float bottom) {
-  float near = -1.0;
-  float far = 1.0;
-  memset(m, 0, 16 * sizeof(float));
-
-  // Главная диагональ
-  m[0] = 2.0f / (right - left);
-  m[5] = 2.0f / (top - bottom);
-  m[10] = -2.0f / (far - near);
-  m[15] = 1.0f;
-
-  // Последний столбец
-  m[3] = -(right + left) / (right - left);
-  m[7] = -(top + bottom) / (top - bottom);
-  m[11] = -(far + near) / (far - near);
-}
-
 void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
   GLint cursorPosLocation = glGetUniformLocation(shaderProgram, "cursorPos");
@@ -234,8 +255,7 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
 
   screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
 
-  float projectionMatrix[16];
-  makeProjection(projectionMatrix, 0, screenW, 0, screenH);
+  makeProjection(projectionMatrix, 0, bufW, 0, bufH);
 
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
