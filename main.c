@@ -9,6 +9,10 @@
 int winW, winH;
 GLint screenSizeLocation;
 
+// Textures
+GLuint manTextureID;
+GLuint cursorTextureID;
+
 char *load_shader_file(const char* fileName) {
   FILE *fp;
   long size = 0;
@@ -33,10 +37,10 @@ char *load_shader_file(const char* fileName) {
   return shaderContent;
 }
 
-GLuint loadTexture(const char* filename) {
+GLuint loadTexture(const char *filename) {
   int width, height, channels;
-  unsigned char* data = stbi_load(filename, &width, &height, &channels, 0);
-  if (data == NULL) {
+  unsigned char *data = stbi_load(filename, &width, &height, &channels, 0);
+  if (!data) {
     printf("Error loading texture '%s'\n", filename);
     exit(1);
   }
@@ -52,7 +56,11 @@ GLuint loadTexture(const char* filename) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   // Загрузка изображения в текстуру
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  GLenum format = GL_RGB;
+  if (channels == 1) format = GL_RED;
+  else if (channels == 4) format = GL_RGBA;
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, data);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   // Освобождение памяти и отвязка текстуры
@@ -194,11 +202,32 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   glEnableVertexAttribArray(1);
 }
 
+void makeProjection(float *m, float left, float right, float top, float bottom) {
+  float near = -1.0;
+  float far = 1.0;
+  int i;
+  for (i = 0; i < 16; i++) m[i] = 0.0;
+  m[0] = 2.0f / (right - left);
+  m[5] = 2.0f / (top - bottom);
+  m[10] = -2.0f / (far - near);
+  m[12] = -(right + left) / (right - left);
+  m[13] = -(top + bottom) / (top - bottom);
+  m[14] = -(far + near) / (far - near);
+  m[15] = 1.0f;
+}
+
 void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   GLint timeLocation = glGetUniformLocation(shaderProgram, "time");
   GLint cursorPosLocation = glGetUniformLocation(shaderProgram, "cursorPos");
-  screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
+  GLint screenLocation = glGetUniformLocation(shaderProgram, "screen");
+  GLint cursorLocation = glGetUniformLocation(shaderProgram, "cursor");
+  GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
   double x, y;
+
+  screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
+
+  float projectionMatrix[16];
+  makeProjection(projectionMatrix, -1.75, 1.75, 1.0, -1.0);
 
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
@@ -207,15 +236,30 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
+    glUniform1i(screenLocation, 0);
+    glUniform1i(cursorLocation, 1);
+
+    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, projectionMatrix);
+
     glUniform1f(timeLocation, glfwGetTime());
     glfwGetCursorPos(win, &x, &y);
     x = x / winW * 2.0 - 1.0;
     y = -(y / winH * 2.0 - 1.0);
     glUniform2f(cursorPosLocation, (float)x, (float)y);
 
+    // Привязка текстур
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, manTextureID);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, cursorTextureID);
+
+    // Прорисовка
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+    // Отображение результата
     glfwSwapBuffers(win);
+
     glfwPollEvents();
   }
 }
@@ -233,9 +277,9 @@ int main() {
 
   init_buffers(&VAO, &VBO, &EBO);
 
-  // Загрузка текстуры
-  GLuint textureID = loadTexture("texture.jpg");
-  glBindTexture(GL_TEXTURE_2D, textureID);
+  // Загрузка текстур
+  manTextureID = loadTexture("images/man.jpg");
+  cursorTextureID = loadTexture("images/arrow.png");
 
   run(win, shaderProgram, VAO);
 
