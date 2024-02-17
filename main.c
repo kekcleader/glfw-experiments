@@ -11,7 +11,7 @@
 
 int winW, winH;
 GLint screenSizeLocation;
-float projectionMatrix[16];
+//float projectionMatrix[16];
 
 // Textures
 GLuint manTextureID;
@@ -74,6 +74,7 @@ GLuint loadTexture(const char *filename) {
   return textureID;
 }
 
+/*
 void makeProjection(float *m, float left, float right, float top, float bottom) {
   float near = -1.0;
   float far = 1.0;
@@ -90,6 +91,7 @@ void makeProjection(float *m, float left, float right, float top, float bottom) 
   m[7] = -(top + bottom) / (top - bottom);
   m[11] = -(far + near) / (far - near);
 }
+*/
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -114,7 +116,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     offY = (h - bufH) / 2;
   }
 
-  makeProjection(projectionMatrix, -offX, w - offX, -offY, h - offY);
+  //makeProjection(projectionMatrix, -offX, w - offX, -offY, h - offY);
 }
 
 void init_graph() {
@@ -214,11 +216,11 @@ void close_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
 void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   // Определение вершин прямоугольника и текстурных координат
   float vertices[] = {
-    // позиции        // текстурные координаты
-    bufW, 0      , 0, 1, 0, // верхний правый угол
-    bufW, bufH, 0, 1, 1, // нижний правый угол
-    0      , bufH, 0, 0, 1, // нижний левый угол
-    0      , 0      , 0, 0, 0  // верхний левый угол
+    // позиции | текстурные координаты
+     1,  1,      1, 0, // верхний правый угол
+     1, -1,      1, 1, // нижний правый угол
+    -1, -1,      0, 1, // нижний левый угол
+    -1,  1,      0, 0  // верхний левый угол
   };
   unsigned int indices[] = {
     0, 1, 3, // первый треугольник
@@ -238,11 +240,11 @@ void init_buffers(GLuint *VAO, GLuint *VBO, GLuint *EBO) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
   // Позиционные атрибуты
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
   // Текстурные атрибуты
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
   glEnableVertexAttribArray(1);
 }
 
@@ -251,12 +253,12 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   GLint cursorPosLocation = glGetUniformLocation(shaderProgram, "cursorPos");
   GLint screenLocation = glGetUniformLocation(shaderProgram, "screen");
   GLint cursorLocation = glGetUniformLocation(shaderProgram, "cursor");
-  GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
+  //GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
   double x, y;
 
   screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
 
-  makeProjection(projectionMatrix, 0, bufW, 0, bufH);
+  //makeProjection(projectionMatrix, 0, bufW, 0, bufH);
 
   glUseProgram(shaderProgram);
   int w, h;
@@ -273,7 +275,7 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
     glUniform1i(screenLocation, 0);
     glUniform1i(cursorLocation, 1);
 
-    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, projectionMatrix);
+    //glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, projectionMatrix);
 
     glUniform1f(timeLocation, glfwGetTime());
     glfwGetCursorPos(win, &x, &y);
