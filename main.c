@@ -147,6 +147,7 @@ GLFWwindow *create_window() {
   glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
   glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   glfwMakeContextCurrent(win);
+  glfwSwapInterval(0);
 
   if (glewInit() != GLEW_OK) {
     printf("Failed to initialize GLEW\n");
@@ -257,6 +258,11 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
 
   makeProjection(projectionMatrix, 0, bufW, 0, bufH);
 
+  glUseProgram(shaderProgram);
+  int w, h;
+  glfwGetFramebufferSize(win, &w, &h);
+  framebuffer_size_callback(win, w, h);
+
   while (!glfwWindowShouldClose(win)) {
     glClearColor(0.2, 0.6, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -288,7 +294,7 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
     // Отображение результата
     glfwSwapBuffers(win);
 
-    glfwPollEvents();
+    glfwWaitEventsTimeout(1.0 / 60);
   }
 }
 
