@@ -9,7 +9,7 @@ uniform sampler2D cursor;
 uniform float time;
 uniform vec2 screenSize;
 uniform vec2 cursorPos;
-uniform float cursorSize = 0.02;
+uniform float cursorSize = 10;
 
 void main() {
   vec2 pos = TexCoord * 2.0 - 1.0;
@@ -20,9 +20,9 @@ void main() {
   r *= glow;
   g *= glow;
   b *= glow;
-  vec2 ndc = gl_FragCoord.xy / vec2(screenSize.x, screenSize.y) * 2.0 - 1.0;
-  if (abs(ndc.x - cursorPos.x) < cursorSize && abs(ndc.y - cursorPos.y) < cursorSize) {
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  vec2 pos2 = TexCoord * screenSize;
+  if (abs(pos2.x - cursorPos.x) < cursorSize && abs(pos2.y - cursorPos.y) < cursorSize) {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Цвет курсора
   } else {
     FragColor = vec4(r, g, b, 1.0) * texture(screen, TexCoord) + texture(cursor, TexCoord);
   }

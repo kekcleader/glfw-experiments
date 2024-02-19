@@ -9,7 +9,8 @@
 #define bufW 320
 #define bufH 200
 
-int winW, winH;
+double winX, winY, winW, winH;
+
 GLint screenSizeLocation;
 //float projectionMatrix[16];
 
@@ -56,8 +57,10 @@ GLuint loadTexture(const char *filename) {
   // Установка параметров текстуры
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // Загрузка изображения в текстуру
   GLenum format = GL_RGB;
@@ -94,29 +97,32 @@ void makeProjection(float *m, float left, float right, float top, float bottom) 
 */
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-  glViewport(0, 0, width, height);
-  winW = width;
-  winH = height;
   glUniform2f(screenSizeLocation, (float)width, (float)height);
 
-  float bufRatio = (float)bufW / bufH;
-  float screenRatio = (float)width / height;
+  winW = width;
+  winH = height;
 
-  float w, h, offX, offY;
+  float aspectRatioSource = (float)bufW / (float)bufH;
+  float aspectRatioWindow = (float)width / (float)height;
 
-  if (screenRatio > bufRatio) {
-    w = bufW * (float)width / height;
-    h = bufH;
-    offX = (w - bufW) / 2;
-    offY = 0;
+  int viewportWidth, viewportHeight;
+
+  if (aspectRatioWindow > aspectRatioSource) {
+    viewportHeight = height;
+    viewportWidth = (int)(height * aspectRatioSource);
   } else {
-    w = bufW;
-    h = bufH * (float)height / width;
-    offX = 0;
-    offY = (h - bufH) / 2;
+    viewportWidth = width;
+    viewportHeight = (int)(width / aspectRatioSource);
   }
 
-  //makeProjection(projectionMatrix, -offX, w - offX, -offY, h - offY);
+  int viewportX = (width - viewportWidth) / 2;
+  int viewportY = (height - viewportHeight) / 2;
+
+  glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+  winX = viewportX;
+  winY = viewportY;
+  winW = viewportWidth;
+  winH = viewportHeight;
 }
 
 void init_graph() {
@@ -135,19 +141,17 @@ GLFWwindow *create_window() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Окно без рамки
   glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // Без автосворачивания
-  winW = mode->width;
-  winH = mode->height;
-  //win = glfwCreateWindow(mode->width, mode->height, "Program", primaryMonitor, NULL);
-  win = glfwCreateWindow(1000, 500, "Program", NULL, NULL);
+  win = glfwCreateWindow(mode->width, mode->height, "Program", primaryMonitor, NULL);
+  //win = glfwCreateWindow(1000, 500, "Program", NULL, NULL);
   if (!win) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();
     return NULL;
   }
   glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
-  glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+  //glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   glfwMakeContextCurrent(win);
   glfwSwapInterval(0);
 
@@ -266,7 +270,7 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
   framebuffer_size_callback(win, w, h);
 
   while (!glfwWindowShouldClose(win)) {
-    glClearColor(0.2, 0.6, 1.0, 1.0);
+    glClearColor(0, 0, 0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
@@ -279,8 +283,8 @@ void run(GLFWwindow *win, GLuint shaderProgram, GLuint VAO) {
 
     glUniform1f(timeLocation, glfwGetTime());
     glfwGetCursorPos(win, &x, &y);
-    x = x / winW * 2.0 - 1.0;
-    y = -(y / winH * 2.0 - 1.0);
+    x = (x - winX) / winW * (winW + 2 * winX);
+    y = (y - winY) / winH * (winH + 2 * winY);
     glUniform2f(cursorPosLocation, (float)x, (float)y);
 
     // Привязка текстур
@@ -314,7 +318,7 @@ int main() {
   init_buffers(&VAO, &VBO, &EBO);
 
   // Загрузка текстур
-  manTextureID = loadTexture("images/man.jpg");
+  manTextureID = loadTexture("images/man_320.jpg");
   cursorTextureID = loadTexture("images/arrow.png");
 
   run(win, shaderProgram, VAO);
