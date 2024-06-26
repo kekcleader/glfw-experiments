@@ -20,6 +20,16 @@ void initPixels(int i) {
     }
 }
 
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, 1);
+    }
+}
+
 int main(void) {
     GLFWwindow* window;
 
@@ -32,6 +42,7 @@ int main(void) {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSwapInterval(0);
 
     if (glewInit() != GLEW_OK) {
@@ -43,8 +54,9 @@ int main(void) {
     int i = 0;
 
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        processInput(window);
 
+        glClear(GL_COLOR_BUFFER_BIT);
         // Отрисовка пикселей
         glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
