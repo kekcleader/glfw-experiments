@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define WIDTH 640
-#define HEIGHT 480
+#define WIDTH 320
+#define HEIGHT 200
+#define ZOOM 2
 
 // Объявляем массив для хранения пикселей
 unsigned char pixels[WIDTH * HEIGHT * 3];
@@ -35,7 +36,7 @@ int main(void) {
 
     if (!glfwInit()) return -1;
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "8-Bit Raster", NULL, NULL);
+    window = glfwCreateWindow(WIDTH * ZOOM, HEIGHT * ZOOM, "8-Bit Raster", NULL, NULL);
     if (!window) {
         glfwTerminate();
         return -1;
@@ -58,6 +59,7 @@ int main(void) {
 
         glClear(GL_COLOR_BUFFER_BIT);
         // Отрисовка пикселей
+        glPixelZoom(ZOOM, ZOOM);
         glDrawPixels(WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
         glfwSwapBuffers(window);
