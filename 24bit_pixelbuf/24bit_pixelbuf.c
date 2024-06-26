@@ -14,7 +14,7 @@ void initPixels(int i) {
         for (int x = 0; x < WIDTH; x++) {
             int index = (y * WIDTH + x) * 3;
             pixels[index] = (x + y + i) % 256; // Красный
-            pixels[index + 1] = (x * 2 + y * 2) % 256; // Зеленый
+            pixels[index + 1] = (-x + y * 2) % 256; // Зеленый
             pixels[index + 2] = (x * 4 + y * 4 + 2 * i) % 256; // Синий
         }
     }
