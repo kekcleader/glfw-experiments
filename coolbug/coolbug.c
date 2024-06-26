@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "../stb_image.h"
 
 const char* vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
@@ -149,7 +149,7 @@ int main(void) {
   glfwSwapInterval(1);
 
   // Загрузка текстуры
-  GLuint textureID = loadTexture("texture.jpg");
+  GLuint textureID = loadTexture("../images/man.jpg");
 
   // Шейдер
   GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
